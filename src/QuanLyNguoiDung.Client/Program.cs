@@ -1,11 +1,16 @@
-namespace QuanLyNguoiDung.Client;
+using System;
+using System.Windows.Forms;
 
-internal static class Program
+namespace QuanLyNguoiDung.Client
 {
-    [STAThread]
-    private static void Main()
+    internal static class Program
     {
-        ApplicationConfiguration.Initialize();
-        Application.Run(new DangNhapForm());
+        [STAThread]
+        static void Main()
+        {
+            ApplicationConfiguration.Initialize();
+            // Chạy form Đăng nhập đầu tiên
+            Application.Run(new DangNhapForm());
+        }
     }
-}
+} 
