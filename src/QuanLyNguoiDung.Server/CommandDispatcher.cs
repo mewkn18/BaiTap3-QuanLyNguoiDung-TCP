@@ -21,8 +21,7 @@ public class CommandDispatcher
                 case Commands.DangNhap:
                     Response kq = await _auth.DangNhapAsync(yeuCau.DuLieu);
                     if (kq.MaLoi == ErrorCodes.Ok)
-                    {
-                    }
+                        phien.UserId = kq.GetData<DangNhapResult>()?.UserId;
                     return kq;
 
                 case Commands.LayThongTin:
@@ -42,6 +41,11 @@ public class CommandDispatcher
         catch (DbException ex)
         {
             Logger.Error($"Lỗi cơ sở dữ liệu khi xử lý {yeuCau.Lenh}: {ex.Message}");
+            return Loi(ErrorCodes.LoiMayChu, "Máy chủ đang gặp sự cố, vui lòng thử lại sau.");
+        }
+        catch (Exception ex)
+        {
+            Logger.Error($"Lỗi không lường trước khi xử lý {yeuCau.Lenh}: {ex.Message}");
             return Loi(ErrorCodes.LoiMayChu, "Máy chủ đang gặp sự cố, vui lòng thử lại sau.");
         }
     }
