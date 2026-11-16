@@ -1,0 +1,9 @@
+﻿CREATE TABLE NguoiDung (
+    UserId INT IDENTITY(1,1) PRIMARY KEY,
+    Username NVARCHAR(50) NOT NULL UNIQUE,
+    PasswordHash NVARCHAR(256) NOT NULL,
+    PasswordSalt NVARCHAR(256) NOT NULL,
+    Email NVARCHAR(100) NOT NULL,
+    FullName NVARCHAR(100) NOT NULL,
+    Birthday DATE NULL
+);
