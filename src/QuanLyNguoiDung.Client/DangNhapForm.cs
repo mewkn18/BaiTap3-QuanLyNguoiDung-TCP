@@ -1,4 +1,4 @@
-using QuanLyNguoiDung.Shared.Messages;
+﻿using QuanLyNguoiDung.Shared.Messages;
 using QuanLyNguoiDung.Shared.Protocol;
 using System;
 using System.Drawing;
@@ -28,6 +28,10 @@ public class DangNhapForm : Form
     {
         KhoiTaoGiaoDien();
         _conn.MatKetNoi += (_, msg) => CapNhatTrangThai("Mất kết nối: " + msg, Color.Red);
+        VisibleChanged += (_, _) =>
+        {
+            if (Visible && !_conn.IsConnected) CapNhatTrangThai("Chưa kết nối", Color.Gray);
+        };
         CapNhatTrangThai("Chưa kết nối", Color.Gray);
     }
 
@@ -122,20 +126,21 @@ public class DangNhapForm : Form
 
             if (resp.MaLoi == ErrorCodes.Ok)
             {
-                // LẤY TOKEN VÀ THÔNG TIN
-                if (resp.DuLieu.HasValue)
+                var result = resp.GetData<DangNhapResult>();
+                if (result == null)
                 {
-                    var result = resp.DuLieu.Value.Deserialize<DangNhapResult>();
-                    _conn.Token = result.Token; // Lưu token vào lớp mạng
-
-                    // TODO: GỌI MAINFORM CỦA CƯỜNG
-
-                    // var mainForm = new MainForm(_conn, this, result.ThongTin, result.HetHan);
-                    // mainForm.Show();
-                    // this.Hide();
-
-                    MessageBox.Show("Đăng nhập thành công! (Chờ mở MainForm)", "Thành công");
+                    MessageBox.Show("Dữ liệu từ máy chủ không hợp lệ.", "Lỗi");
+                    return;
                 }
+
+                _conn.Token = result.Token; // Lưu token vào lớp mạng
+                txtPassword.Clear();
+
+                // Mở form chính của Cường, truyền kết nối và thông tin người dùng
+                var mainForm = new MainForm(_conn, this, result,
+                    result.HetHan?.ToLocalTime().ToString("HH:mm dd/MM/yyyy"));
+                mainForm.Show();
+                this.Hide();
             }
             else
             {

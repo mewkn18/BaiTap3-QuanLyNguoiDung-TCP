@@ -44,6 +44,32 @@ namespace QuanLyNguoiDung.Server
             return null;
         }
 
+        // Tìm người dùng theo UserId (dùng cho LAYTHONGTIN, phiên chỉ lưu UserId)
+        public (int UserId, string Username, string Hash, string Salt, string Email, string FullName, DateOnly? Birthday)? GetById(int userId)
+        {
+            string sql = "SELECT UserId, Username, PasswordHash, PasswordSalt, Email, FullName, Birthday FROM NguoiDung WHERE UserId = @UserId";
+
+            using var conn = new SqlConnection(_connectionString);
+            using var cmd = new SqlCommand(sql, conn);
+            cmd.Parameters.Add("@UserId", SqlDbType.Int).Value = userId;
+
+            conn.Open();
+            using var reader = cmd.ExecuteReader();
+            if (reader.Read())
+            {
+                return (
+                    reader.GetInt32(0),
+                    reader.GetString(1),
+                    reader.GetString(2),
+                    reader.GetString(3),
+                    reader.GetString(4),
+                    reader.GetString(5),
+                    reader.IsDBNull(6) ? null : DateOnly.FromDateTime(reader.GetDateTime(6))
+                );
+            }
+            return null;
+        }
+
         // Thêm người dùng mới
         public bool AddUser(string username, string hash, string salt, string email, string fullName, DateOnly? birthday)
         {
