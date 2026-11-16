@@ -22,8 +22,14 @@ namespace QuanLyNguoiDung.Client
         private Button btnDangKy;
         private Label lblTrangThai;
 
-        public DangKyForm()
+        private readonly string _ip;
+        private readonly int _cong;
+
+        // 1. NHẬN IP VÀ CỔNG TỪ FORM ĐĂNG NHẬP
+        public DangKyForm(string ip, int cong)
         {
+            _ip = ip;
+            _cong = cong;
             KhoiTaoGiaoDien();
         }
 
@@ -111,19 +117,16 @@ namespace QuanLyNguoiDung.Client
 
             KhoaNut(true);
             lblTrangThai.Text = "Đang xử lý...";
+            ServerConnection conn = null;
 
             try
             {
-                
-                string ip = "127.0.0.1";
-                int cong = 9000;
-
-                var conn = new ServerConnection();
-                await conn.ConnectAsync(ip, cong);
+                conn = new ServerConnection();
+                await conn.ConnectAsync(_ip, _cong); // Dùng IP/Cổng được truyền vào
 
                 var req = new Request
                 {
-                    Lenh = Commands.DangKy, 
+                    Lenh = Commands.DangKy,
                     Token = null,
                     DuLieu = JsonSerializer.SerializeToElement(new DangKyData
                     {
@@ -136,9 +139,8 @@ namespace QuanLyNguoiDung.Client
                 };
 
                 Response resp = await conn.SendAsync(req);
-                await conn.CloseAsync();
 
-                if (resp.MaLoi == ErrorCodes.Ok) 
+                if (resp.MaLoi == ErrorCodes.Ok)
                 {
                     MessageBox.Show("Đăng ký thành công! Bạn có thể đăng nhập.", "Thành công");
                     this.Close();
@@ -154,6 +156,8 @@ namespace QuanLyNguoiDung.Client
             }
             finally
             {
+                // 2. LUÔN ĐÓNG KẾT NỐI DÙ LỖI HAY THÀNH CÔNG
+                if (conn != null) await conn.CloseAsync();
                 KhoaNut(false);
                 lblTrangThai.Text = "";
             }

@@ -1,11 +1,12 @@
+using QuanLyNguoiDung.Shared.Messages;
+using QuanLyNguoiDung.Shared.Protocol;
 using System;
 using System.Drawing;
 using System.IO;
 using System.Net.Sockets;
+using System.Text.Json;
 using System.Threading.Tasks;
 using System.Windows.Forms;
-using QuanLyNguoiDung.Shared.Messages;
-using QuanLyNguoiDung.Shared.Protocol;
 
 namespace QuanLyNguoiDung.Client;
 
@@ -108,9 +109,9 @@ public class DangNhapForm : Form
 
             var req = new Request
             {
-                Lenh = Commands.DangNhap, 
+                Lenh = Commands.DangNhap,
                 Token = null,
-                DuLieu = System.Text.Json.JsonSerializer.SerializeToElement(new DangNhapData
+                DuLieu = JsonSerializer.SerializeToElement(new DangNhapData
                 {
                     Username = txtUsername.Text.Trim(),
                     Password = txtPassword.Text
@@ -119,9 +120,22 @@ public class DangNhapForm : Form
 
             Response resp = await _conn.SendAsync(req);
 
-            if (resp.MaLoi == ErrorCodes.Ok) 
+            if (resp.MaLoi == ErrorCodes.Ok)
             {
-                MessageBox.Show("Đăng nhập thành công!", "Thành công");
+                // LẤY TOKEN VÀ THÔNG TIN
+                if (resp.DuLieu.HasValue)
+                {
+                    var result = resp.DuLieu.Value.Deserialize<DangNhapResult>();
+                    _conn.Token = result.Token; // Lưu token vào lớp mạng
+
+                    // TODO: GỌI MAINFORM CỦA CƯỜNG
+
+                    // var mainForm = new MainForm(_conn, this, result.ThongTin, result.HetHan);
+                    // mainForm.Show();
+                    // this.Hide();
+
+                    MessageBox.Show("Đăng nhập thành công! (Chờ mở MainForm)", "Thành công");
+                }
             }
             else
             {
@@ -133,6 +147,7 @@ public class DangNhapForm : Form
         catch (Exception ex) when (ex is SocketException or IOException or InvalidOperationException)
         {
             CapNhatTrangThai("Lỗi kết nối", Color.Red);
+            await _conn.CloseAsync(); // LỖI 5: ĐÓNG KẾT NỐI KHI CÓ LỖI
             MessageBox.Show("Không kết nối được tới server. Kiểm tra IP/cổng.", "Lỗi");
         }
         finally
@@ -143,7 +158,12 @@ public class DangNhapForm : Form
 
     private void btnMoDangKy_Click(object sender, EventArgs e)
     {
-        MessageBox.Show("Form Đăng Ký sẽ được tạo sau!");
+        // Lấy IP/Cổng hiện tại
+        if (!int.TryParse(txtCong.Text, out int cong)) cong = 9000;
+
+        // Mở form Đăng Ký và truyền IP/Cổng sang
+        var f = new DangKyForm(txtIp.Text.Trim(), cong);
+        f.ShowDialog(this);
     }
     
 
